@@ -8,6 +8,10 @@
 
 import SwiftUI
 
+
+
+
+
 struct CleanerView: View {
     
     @EnvironmentObject var globalManager: GlobalDataModel
@@ -113,7 +117,7 @@ struct CleanerView: View {
                         .shadow(color: .gray.opacity(0.2), radius: 2)
 
                     ScrollView {
-                        LazyVStack(spacing: 12) {
+                        VStack(spacing: 12) {
                             ForEach(globalManager.allDefaultPaths, id: \.self) { file in
                                 let isSelected = selectedFiles.contains(file)
                                 
@@ -136,6 +140,13 @@ struct CleanerView: View {
                                     Spacer()
                                     checkmarkImage
                                 }
+                                .contextMenu {
+                                    Button(action: {
+                                        print(moreInfoAboutTheFolderAndContents(file))
+                                    }) {
+                                        Label("Display more", systemImage: "info.circle")
+                                    }
+                                }
                                 .padding()
                                 .background(backgroundColor)
                                 .overlay(stroke)
@@ -150,6 +161,7 @@ struct CleanerView: View {
                                     }
                                 }
                             }
+                          
 
                         }
                         .padding(.horizontal)
@@ -159,7 +171,11 @@ struct CleanerView: View {
                     Button(action: {
                         withAnimation(.easeInOut) {
                             print("this IS \(selectedFiles)")
-                            selectedFiles.removeAll()
+                          //  selectedFiles.removeAll()
+                            let cachesManager = cachesManager()
+                           // cachesManager.initWithDefaults() is not needed as we use method only
+                            cachesManager.deleteCaches(from: selectedFiles)
+                            
                         }
                     }) {
                         Text("Удалить")
@@ -206,4 +222,44 @@ struct CleanerView: View {
         .shadow(color: Color.black.opacity(0.1), radius: 20, x: 0, y: 10)
         .padding()
     }
+    
+    private func moreInfoAboutTheFolderAndContents(_ dirPath: String) -> [String] {
+        let fileManager = FileManager.default
+        var allPaths: [String] = []
+        
+        // Helper function to recursively traverse the directory
+        func traverseDirectory(at path: String) {
+            var isDirectory: ObjCBool = false
+            if fileManager.fileExists(atPath: path, isDirectory: &isDirectory) {
+                if isDirectory.boolValue {
+                    do {
+                        // Get the contents of the directory
+                        let contents = try fileManager.contentsOfDirectory(atPath: path)
+                        
+                        // Iterate through each item
+                        for item in contents {
+                            let itemPath = (path as NSString).appendingPathComponent(item)
+                            allPaths.append(itemPath) // Add the item's path to the list
+                            
+                            // Recursively traverse subdirectories
+                            traverseDirectory(at: itemPath)
+                        }
+                    } catch {
+                        print("Error reading contents of directory '\(path)': \(error.localizedDescription)")
+                    }
+                } else {
+                    // If it's a file, just add its path
+                    allPaths.append(path)
+                }
+            } else {
+                print("The path '\(path)' does not exist.")
+            }
+        }
+        
+        // Start the recursive traversal
+        traverseDirectory(at: dirPath)
+        return allPaths
+    }
+    
+    
 }

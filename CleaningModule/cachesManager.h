@@ -15,6 +15,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 -(void)initWithDefaults;
 
+-(BOOL)deleteCachesFrom:(NSArray<NSString *> *)ProvidedcachesArray;
+
+-(NSArray *)getAllFilesFoldersFromThedir:(NSString *)directory;
+
 @end
 
 NS_ASSUME_NONNULL_END
